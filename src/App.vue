@@ -5,6 +5,7 @@
       <div class="recto">
         <div class="foto">
           <select class="form-select" aria-label="Default select example" v-model="tipoSeleccionado" placeholder="tipos" @change="filtrarpokemon()" style="text-align: center;">
+            <option value="seleccione" v-if="filtronombre==true">Seleccione</option>
             <option value="Todos">Todos</option>
             <option v-for="(color, tipo) in colorestipo" :key="color" :value="tipo" >
               {{ tipo }}
@@ -49,7 +50,7 @@
     </div>
 
     <div class="card" v-if="filtronombre == true">
-        <button  class="card-content" @click="abrirDetalle(index)">
+        <button  class="card-content" @click="abrirDetalleBuscar(pokemonBuscado.numero)">
           <div class="card-number">#{{ pokemonBuscado.numero }}</div>
           <div class="card-name">{{ pokemonBuscado.nombre }}</div>
           <img :src="pokemonBuscado.img" :alt="'Imagen de ' + pokemonBuscado.nombre" class="pokemon-image" />
@@ -139,9 +140,11 @@ const colorestipo = {
 };
 const numeroDeCartas = ref(20); // Inicialmente, muestra 20 cartas
 const filtropokemones = ref([]);
+let inicio = 1
 
 async function obtenerurlpokemon() {
-  for (let i = 1; i <= 1200; i++) {
+  console.log(inicio, numeroDeCartas.value);
+  for (let i = inicio; i <= numeroDeCartas.value; i++) {
     const response = await axios.get(`https://pokeapi.co/api/v2/pokemon/${i}`);
     const r = response.data;
 
@@ -160,6 +163,8 @@ async function obtenerurlpokemon() {
       mostrarDetalle: false,
       tipos: r.types.map((e) => e.type.name)
     });
+
+    inicio=i
   }
 }
 
@@ -177,7 +182,9 @@ function cerrarDetalle() {
 }
 
 function mostrarMas() {
-  numeroDeCartas.value += 50; // Incrementa el número de cartas a mostrar
+  numeroDeCartas.value += 50;
+  inicio+=1
+  obtenerurlpokemon() // Incrementa el número de cartas a mostrar
 }
 
 onMounted(() => {
@@ -187,8 +194,11 @@ onMounted(() => {
 const pokemonBuscado = ref({});
 const nombrepokemon = ref("");
 const filtronombre = ref(false);
+const activarfiltro = ref(false);
+const tipoSeleccionado = ref("Todos")
 
 function filtrarPokemonPorNombre() {
+  tipoSeleccionado.value="seleccione"
   console.log(nombrepokemon.value);
   pokemons.value.forEach((pokemon) => {
     if (pokemon.nombre === nombrepokemon.value.toUpperCase()) {
@@ -198,11 +208,12 @@ function filtrarPokemonPorNombre() {
   });
 }
 
-
-const activarfiltro = ref(false);
-const tipoSeleccionado = ref("Todos")
-
 function filtrarpokemon() {
+  console.log(tipoSeleccionado.value);
+  if(tipoSeleccionado.value != "seleccione"){
+    filtronombre.value=false
+  }
+
   if (tipoSeleccionado.value == "Todos") {
     activarfiltro.value = false;
     return;
@@ -218,6 +229,12 @@ function filtrarpokemon() {
   activarfiltro.value = true;
 }
 
+const abrirDetalleBuscar =(numero)=>{
+  const buscar = pokemons.value.find(p=>p.numero==numero)
+
+  detallePokemon.value = buscar
+  mostrarModal.value=true
+}
 </script>
 
 <style scoped>
@@ -362,6 +379,9 @@ button {
 }
 
 .modal-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   background-color: white;
   padding: 20px;
   border-radius: 10px;
@@ -425,4 +445,10 @@ table{
 td{
   padding: 10px;
 }
+.foto{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 </style>
